@@ -92,15 +92,18 @@ namespace HomeConnectTray
 			}
 			else
             {
-				System.Diagnostics.Debug.WriteLine("Skipping idleTimer_Elapsed");
+				//System.Diagnostics.Debug.WriteLine("Skipping idleTimer_Elapsed");
 			}
 		}
 
-		void Exit(object sender, EventArgs e)
+		async void Exit(object sender, EventArgs e)
 		{
 			// We must manually tidy up and remove the icon before we exit.
 			// Otherwise it will be left behind until the user mouses over.
 			notifyIcon.Visible = false;
+
+			// Send an inactive message so we don't leave the sensor in a triggered state.
+			await Post(140, "inactive");
 			Application.Exit();
 		}
 	}
