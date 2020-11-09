@@ -16,16 +16,21 @@ namespace HomeConnectTray
 		public MyApplicationContext()
 		{
 			MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(Exit));
+			MenuItem settingsMenuItem = new MenuItem("Settings", new EventHandler(Settings));
 
 			notifyIcon = new NotifyIcon();
 			updateTrayIcon();
-			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { exitMenuItem });
+			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { settingsMenuItem, exitMenuItem });
 			notifyIcon.Visible = true;
 
 			idleTimer = new System.Timers.Timer(1000 * 1);
-			System.Diagnostics.Debug.WriteLine("Wire up timer event");
 			idleTimer.Elapsed += idleTimer_Elapsed;
 			idleTimer.Start();
+
+			if (Properties.Settings.Default.HubitatIpAddress == "" || Properties.Settings.Default.PresenceDeviceId == "")
+            {
+				Settings(null, null);
+            }
 		}
 
 		private void updateTrayIcon()
@@ -38,17 +43,17 @@ namespace HomeConnectTray
 			notifyIcon.Icon = new Icon(filename);
 		}
 
-		private async Task<bool> Post(int id, string method)
+		private async Task<bool> Post(string id, string method)
 		{
 			using (var client = new WebClient())
 			{
 				try
 				{
 					var values = new NameValueCollection();
-					values["id"] = id.ToString();
+					values["id"] = id;
 					values["method"] = method;
 					System.Diagnostics.Debug.WriteLine("Begin POST (id: " + id + ", method: " + method + ")");
-                    await client.UploadValuesTaskAsync("http://192.168.1.50/device/runmethod", values);
+                    await client.UploadValuesTaskAsync("http://" + Properties.Settings.Default.HubitatIpAddress + "/device/runmethod", values);
 					System.Diagnostics.Debug.WriteLine("End POST");
 					_lastNotifySuccess = true;
 					return true;
@@ -69,12 +74,14 @@ namespace HomeConnectTray
 		private bool IsIdle()
 		{
 			long idleTime = IdleTimeFinder.GetIdleTime();
-			//return (idleTime > 1000 * 60 * 10);
-			return (idleTime > 1000 * 5);
+			return (idleTime > 1000 * Properties.Settings.Default.IdleSeconds);
 		}
 
 		async void idleTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{
+			if (Properties.Settings.Default.HubitatIpAddress == "" || Properties.Settings.Default.PresenceDeviceId == "")
+				return;
+
 			if (_timerShouldProcess.WaitOne(0))
             {
 				//System.Diagnostics.Debug.WriteLine("Begin idleTimer_Elapsed");
@@ -83,7 +90,7 @@ namespace HomeConnectTray
 				if (_idleSent == null || isIdle != _idleSent)
 				{
 					System.Diagnostics.Debug.WriteLine("Idle: " + isIdle);
-					if (await Post(140, isIdle ? "inactive" : "active"))
+					if (await Post(Properties.Settings.Default.PresenceDeviceId, isIdle ? "inactive" : "active"))
 						_idleSent = isIdle;
 					updateTrayIcon();
 				}
@@ -96,6 +103,12 @@ namespace HomeConnectTray
 			}
 		}
 
+		void Settings(object sender, EventArgs e)
+        {
+			SettingsForm form = new SettingsForm();
+			form.ShowDialog();
+        }
+
 		async void Exit(object sender, EventArgs e)
 		{
 			// We must manually tidy up and remove the icon before we exit.
@@ -103,7 +116,7 @@ namespace HomeConnectTray
 			notifyIcon.Visible = false;
 
 			// Send an inactive message so we don't leave the sensor in a triggered state.
-			await Post(140, "inactive");
+			await Post(Properties.Settings.Default.PresenceDeviceId, "inactive");
 			Application.Exit();
 		}
 	}
