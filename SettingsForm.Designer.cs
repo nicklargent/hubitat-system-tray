@@ -1,4 +1,4 @@
-﻿namespace HomeConnectTray
+﻿namespace HubitatSystemTray
 {
     partial class SettingsForm
     {

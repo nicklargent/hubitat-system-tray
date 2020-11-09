@@ -7,8 +7,8 @@
     <ProjectGuid>{82EE14AD-14B2-4C4E-86B7-872AD6B2EC6B}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>HomeConnectTray</RootNamespace>
-    <AssemblyName>HomeConnectTray</AssemblyName>
+    <RootNamespace>HubitatSystemTray</RootNamespace>
+    <AssemblyName>HubitatSystemTray</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

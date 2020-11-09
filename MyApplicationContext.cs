@@ -6,7 +6,7 @@ using System.Net;
 using System.Collections.Specialized;
 using System.Threading;
 
-namespace HomeConnectTray
+namespace HubitatSystemTray
 {
     public class MyApplicationContext : ApplicationContext
 	{
