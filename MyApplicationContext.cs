@@ -22,6 +22,7 @@ namespace HubitatSystemTray
 			notifyIcon = new NotifyIcon();
 			updateTrayIcon();
 			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { settingsMenuItem, new MenuItem("-"), rebootMenuItem, new MenuItem("-"), exitMenuItem });
+            notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
 			notifyIcon.Visible = true;
 			
 			idleTimer = new System.Timers.Timer(1000 * 1);
@@ -34,7 +35,12 @@ namespace HubitatSystemTray
             }
 		}
 
-		private void updateTrayIcon()
+        private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+			Settings(sender, e);
+        }
+
+        private void updateTrayIcon()
 		{
 			bool connected = false;
 			if (_lastNotifySuccess.HasValue && _lastNotifySuccess.Value)
