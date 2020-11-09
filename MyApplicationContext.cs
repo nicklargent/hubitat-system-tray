@@ -17,12 +17,13 @@ namespace HomeConnectTray
 		{
 			MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(Exit));
 			MenuItem settingsMenuItem = new MenuItem("Settings", new EventHandler(Settings));
+			MenuItem rebootMenuItem = new MenuItem("Reboot Hubitat", new EventHandler(RebootHubitat));
 
 			notifyIcon = new NotifyIcon();
 			updateTrayIcon();
-			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { settingsMenuItem, exitMenuItem });
+			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { settingsMenuItem, new MenuItem("-"), rebootMenuItem, new MenuItem("-"), exitMenuItem });
 			notifyIcon.Visible = true;
-
+			
 			idleTimer = new System.Timers.Timer(1000 * 1);
 			idleTimer.Elapsed += idleTimer_Elapsed;
 			idleTimer.Start();
@@ -43,7 +44,7 @@ namespace HomeConnectTray
 			notifyIcon.Icon = new Icon(filename);
 		}
 
-		private async Task<bool> Post(string id, string method)
+		private async Task<bool> PostDeviceAction(string id, string method)
 		{
 			using (var client = new WebClient())
 			{
@@ -90,7 +91,7 @@ namespace HomeConnectTray
 				if (_idleSent == null || isIdle != _idleSent)
 				{
 					System.Diagnostics.Debug.WriteLine("Idle: " + isIdle);
-					if (await Post(Properties.Settings.Default.PresenceDeviceId, isIdle ? "inactive" : "active"))
+					if (await PostDeviceAction(Properties.Settings.Default.PresenceDeviceId, isIdle ? "inactive" : "active"))
 						_idleSent = isIdle;
 					updateTrayIcon();
 				}
@@ -116,8 +117,25 @@ namespace HomeConnectTray
 			notifyIcon.Visible = false;
 
 			// Send an inactive message so we don't leave the sensor in a triggered state.
-			await Post(Properties.Settings.Default.PresenceDeviceId, "inactive");
+			await PostDeviceAction(Properties.Settings.Default.PresenceDeviceId, "inactive");
 			Application.Exit();
+		}
+
+		void RebootHubitat(object sender, EventArgs e)
+        {
+			using (var client = new WebClient())
+			{
+				try
+				{
+					System.Diagnostics.Debug.WriteLine("Begin Reboot");
+					client.UploadString("http://" + Properties.Settings.Default.HubitatIpAddress + "/hub/reboot", "");
+					System.Diagnostics.Debug.WriteLine("End Reboot");
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine(ex.ToString());
+				}
+			}
 		}
 	}
 }
