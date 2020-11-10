@@ -91,18 +91,28 @@ namespace HubitatSystemTray
 
 			if (_timerShouldProcess.WaitOne(0))
             {
-				//System.Diagnostics.Debug.WriteLine("Begin idleTimer_Elapsed");
+				try
+                {
+					//System.Diagnostics.Debug.WriteLine("Begin idleTimer_Elapsed");
 
-				bool isIdle = IsIdle();
-				if (_idleSent == null || isIdle != _idleSent)
-				{
-					System.Diagnostics.Debug.WriteLine("Idle: " + isIdle);
-					if (await PostDeviceAction(Properties.Settings.Default.PresenceDeviceId, isIdle ? "inactive" : "active"))
-						_idleSent = isIdle;
-					updateTrayIcon();
+					bool isIdle = IsIdle();
+					if (_idleSent == null || isIdle != _idleSent)
+					{
+						System.Diagnostics.Debug.WriteLine("Idle: " + isIdle);
+						if (await PostDeviceAction(Properties.Settings.Default.PresenceDeviceId, isIdle ? "inactive" : "active"))
+							_idleSent = isIdle;
+						updateTrayIcon();
+					}
+                }
+				catch (Exception ex)
+                {
+					System.Diagnostics.Debug.WriteLine(ex.ToString());
+                }
+				finally
+                {
+					//System.Diagnostics.Debug.WriteLine("End idleTimer_Elapsed");
+					_timerShouldProcess.Set();
 				}
-				//System.Diagnostics.Debug.WriteLine("End idleTimer_Elapsed");
-				_timerShouldProcess.Set();
 			}
 			else
             {
